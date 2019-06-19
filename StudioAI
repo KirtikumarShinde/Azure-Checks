@@ -1,0 +1,36 @@
+os.environ['ACCESS_TOKEN'] = 'xxxxx'
+
+import studio # studio                   0.0.1.dev3
+
+raw_list = [x for x in io.list() if 'raw_' in x]
+
+conversion_list = {
+    "string": "CHAR",
+    "bigint": "INT",
+    "timestamp": "TIMESTAMP",
+    "float": "FLOAT",
+    "date": "DATE"
+}
+
+SCHEMA = 'OMOP CDM'
+
+for df in raw_list:
+    
+    # convert spark dataframe to input required by studio
+    col_list = []
+    for col in io.load(df).dtypes:
+        col_dict = {}
+        col_dict['Name']=col[0]
+        
+        col_dict['Type']=conversion_list[col[1]]
+        col_dict['Description']=''
+        col_list.append(col_dict)
+
+    col_df = pd.DataFrame(col_list)
+    df_name = df[4:]
+    
+    # push schema to studio
+    studio.create_schema(df=col_df,
+                         data_set_name=df_name,
+                         data_source_name=SCHEMA,
+                         is_schema_df=True)
